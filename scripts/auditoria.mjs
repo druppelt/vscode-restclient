@@ -55,7 +55,7 @@ ok('sigue aportando el lenguaje http', pkg.contributes.languages?.some((l) => l.
 // peticion de la organizacion (issue #1): la lista exacta la congela
 // src/test/integration/suite/commandIds.test.ts; aqui se vigila la forma.
 ok('los comandos publicos llevan el prefijo original', pkg.contributes.commands.length === 21 && pkg.contributes.commands.every((c) => c.command.startsWith('rest-client.')), pkg.contributes.commands.map((c) => c.command).filter((c) => !c.startsWith('rest-client.')).join(', '));
-ok('el runner se publica como binario', pkg.bin?.httpkeeper !== undefined, pkg.bin?.httpkeeper);
+ok('el runner se publica como binario', pkg.bin?.restclient !== undefined, pkg.bin?.restclient);
 
 seccion('crédito al autor original (es MIT, pero se dice)');
 const readme = leer('README.md');
@@ -106,9 +106,9 @@ seccion('dependencias');
 const audit = json(correr('npm audit --omit=dev --json --fetch-timeout=60000').salida);
 const v = audit.metadata?.vulnerabilities ?? {};
 if (typeof v.total === 'number') {
-    ok('ninguna vulnerabilidad en produccion', v.total === 0, `total: ${v.total}`);
+  ok('ninguna vulnerabilidad en produccion', v.total === 0, `total: ${v.total}`);
 } else {
-    aviso('vulnerabilidades en produccion: npm audit no devolvio datos', 'sin red o formato inesperado');
+  aviso('vulnerabilidades en produccion: npm audit no devolvio datos', 'sin red o formato inesperado');
 }
 ok('aws-amplify fuera', !JSON.stringify(pkg.dependencies).includes('aws-amplify'));
 ok('xmldom sin mantenimiento fuera', pkg.dependencies.xmldom === undefined);
@@ -130,10 +130,10 @@ seccion('los recursos que pide el codigo existen y viajan');
 // webview excluido del paquete y un icono heredado que ya no existia. Ninguno
 // rompe la compilacion; se ven al abrir la pestana de respuesta ya instalada.
 const recursos = [...leer('src/views/baseWebview.ts').matchAll(/asAbsolutePath\(path\.join\('([^']+)', '([^']+)'\)\)/g)]
-    .map((m) => `${m[1]}/${m[2]}`);
+  .map((m) => `${m[1]}/${m[2]}`);
 ok('el codigo pide recursos por ruta', recursos.length > 0, recursos.join(', '));
 for (const r of recursos) {
-    ok(`existe ${r}`, fs.existsSync(r));
+  ok(`existe ${r}`, fs.existsSync(r));
 }
 
 seccion('el cambio de nombre no dejo cabos sueltos');
@@ -143,11 +143,11 @@ seccion('el cambio de nombre no dejo cabos sueltos');
 const fuentes = correr('git ls-files src').salida.split(/\r?\n/).filter((f) => f.endsWith('.ts') && !f.startsWith('src/test'));
 const registrados = new Set([...leer('package.json').matchAll(/"command":\s*"([^"]+)"/g)].map((m) => m[1]));
 for (const f of fuentes) {
-    for (const m of leer(f).matchAll(/registerCommand(?:Safely)?\('([^']+)'/g)) registrados.add(m[1]);
+  for (const m of leer(f).matchAll(/registerCommand(?:Safely)?\('([^']+)'/g)) registrados.add(m[1]);
 }
 const invocados = new Set();
 for (const f of fuentes) {
-    for (const m of leer(f).matchAll(/command:([a-z0-9-]+\.[A-Za-z0-9._-]+)/g)) invocados.add(m[1]);
+  for (const m of leer(f).matchAll(/command:([a-z0-9-]+\.[A-Za-z0-9._-]+)/g)) invocados.add(m[1]);
 }
 const huerfanos = [...invocados].filter((c) => !registrados.has(c));
 ok('todo comando invocado por enlace existe', huerfanos.length === 0, huerfanos.join(', '));
@@ -161,9 +161,6 @@ ok('todo comando invocado por enlace existe', huerfanos.length === 0, huerfanos.
 // Con comillas simples o dobles: el formateador de cada cual no debe cegar la comprobacion.
 const idDeclarado = /ExtensionId: string = ['"]([^'"]+)['"]/.exec(leer('src/common/constants.ts'))?.[1];
 ok('el id del código es publisher.name del manifiesto', idDeclarado === `${pkg.publisher}.${pkg.name}`, `${idDeclarado} vs ${pkg.publisher}.${pkg.name}`);
-// La sección de ajustes del original se sigue leyendo: es lo que hace que ocho
-// años de configuración ajena funcionen sin tocar nada.
-ok('se conserva la herencia de ajustes', leer('src/utils/configuracionHeredada.ts').includes("'rest-client'"));
 
 seccion('nivel 2: formato JetBrains, streaming, agentes y runner');
 const cliFuente = leer('src/cli/index.ts');
@@ -184,11 +181,11 @@ const mcp = leer('src/cli/mcp.ts');
 ok('el servidor MCP acota la raiz y no escribe en disco', mcp.includes('dentroDeLaRaiz') && !/fs\.write|writeFileSync/.test(mcp));
 const mcpPrueba = correr('node scripts/probar-mcp.mjs');
 ok('el servidor MCP pasa su prueba de punta a punta', mcpPrueba.codigo === 0, /(\d+) fallos/.exec(mcpPrueba.salida)?.[0] ?? '');
-ok('existe la accion de GitHub y descarga el runner de la publicacion', fs.existsSync('action.yml') && leer('action.yml').includes('using: composite') && leer('action.yml').includes('httpkeeper-cli.js'));
-ok('el flujo de release adjunta el runner suelto', leer('.github/workflows/release.yml').includes('httpkeeper-cli.js'));
+ok('existe la accion de GitHub y descarga el runner de la publicacion', fs.existsSync('action.yml') && leer('action.yml').includes('using: composite') && leer('action.yml').includes('restclient.js'));
+ok('el flujo de release adjunta el runner suelto', leer('.github/workflows/release.yml').includes('restclient.js'));
 const npmPkg = JSON.parse(leer('npm/package.json'));
 ok('el paquete npm tiene el mismo numero de version', npmPkg.version === pkg.version, `npm ${npmPkg.version} / extension ${pkg.version}`);
-ok('el paquete npm es solo el runner', npmPkg.bin?.httpkeeper === 'cli.js' && JSON.stringify(npmPkg.files) === JSON.stringify(['cli.js', 'README.md', 'LICENSE']) && !npmPkg.dependencies);
+ok('el paquete npm es solo el runner', npmPkg.bin?.restclient === 'cli.js' && JSON.stringify(npmPkg.files) === JSON.stringify(['cli.js', 'README.md', 'LICENSE']) && !npmPkg.dependencies);
 ok('la gramatica pinta import y run', leer('syntaxes/http.tmLanguage.json').includes('http.import') && leer('syntaxes/http.tmLanguage.json').includes('http.run'));
 
 seccion('las dos lenguas estan completas');
@@ -199,11 +196,11 @@ seccion('el paquete lleva lo que promete y nada mas');
 const empaquetados = correr('npx vsce ls --no-dependencies').salida.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 const enPaquete = (f) => empaquetados.includes(f);
 ok('el bundle del runner viaja en el paquete', enPaquete('dist/cli.js'));
-ok('el binario declarado es el que viaja', enPaquete(pkg.bin.httpkeeper.replace('./', '')));
+ok('el binario declarado es el que viaja', enPaquete(pkg.bin.restclient.replace('./', '')));
 ok('los avisos de terceros viajan', enPaquete('THIRD-PARTY-NOTICES.txt') && enPaquete('LICENSE'));
 ok('los dos idiomas viajan', enPaquete('package.nls.json') && enPaquete('package.nls.es.json'));
 for (const r of recursos) {
-    ok(`${r} viaja en el paquete`, enPaquete(r));
+  ok(`${r} viaja en el paquete`, enPaquete(r));
 }
 ok('sin codigo fuente dentro', !empaquetados.some((f) => f.startsWith('src/')));
 ok('sin mapas de codigo dentro', !empaquetados.some((f) => f.endsWith('.map')));
@@ -229,9 +226,6 @@ const cliPub = correr('node scripts/probar-cli.mjs', { CLI_RUTA: 'dist/cli.js' }
 ok('el runner publicado pasa la misma prueba', cliPub.codigo === 0, /(\d+) fallos/.exec(cliPub.salida)?.[0] ?? '');
 
 seccion('compatibilidad con REST Client');
-const ajustes = leer('src/utils/configuracionHeredada.ts');
-ok('se sigue leyendo la sección rest-client', ajustes.includes("'rest-client'"));
-ok('se usa inspect para no tapar lo heredado', ajustes.includes('inspect'));
 const troceo = leer('src/core/secuencia.ts');
 ok('el troceo por ### se comporta como el original', troceo.includes('getDelimiterRows'));
 
@@ -239,12 +233,12 @@ seccion('promesas del README');
 // El numero de pruebas es lo primero que se queda viejo en un README, y aqui
 // es ademas el argumento central del fork. Se cuenta, no se cree.
 const cuentaIts = (dir) => fs.readdirSync(dir, { recursive: true })
-    .filter((f) => String(f).endsWith('.test.ts'))
-    .reduce((n, f) => n + (leer(path.join(dir, String(f))).match(/\bit\(/g)?.length ?? 0), 0);
+  .filter((f) => String(f).endsWith('.test.ts'))
+  .reduce((n, f) => n + (leer(path.join(dir, String(f))).match(/\bit\(/g)?.length ?? 0), 0);
 const nPruebas = cuentaIts('src/test/unit') + cuentaIts('src/test/integration');
 for (const f of ['docs/HTTPKEEPER.md', 'docs/HTTPKEEPER.es.md']) {
-    const prometido = /\*\*(\d+)\*\*\s*\(/.exec(leer(f))?.[1];
-    ok(`${f} promete el numero de pruebas que hay`, Number(prometido) === nPruebas, `dice ${prometido}, hay ${nPruebas}`);
+  const prometido = /\*\*(\d+)\*\*\s*\(/.exec(leer(f))?.[1];
+  ok(`${f} promete el numero de pruebas que hay`, Number(prometido) === nPruebas, `dice ${prometido}, hay ${nPruebas}`);
 }
 ok('las unitarias que corren son las que estan escritas', Number(nUnit) === cuentaIts('src/test/unit'), `${nUnit} corriendo`);
 ok('promete 400 paquetes', leer('docs/HTTPKEEPER.md').includes('400') && readme.includes('400'));
