@@ -265,16 +265,16 @@ export class HttpClient {
             const proxyEndpoint = url.parse(settings.proxy);
             if (/^https?:$/.test(proxyEndpoint.protocol || '')) {
                 const proxyOptions = {
-                    host: proxyEndpoint.hostname,
-                    port: Number(proxyEndpoint.port),
                     rejectUnauthorized: settings.proxyStrictSSL
                 };
 
-                const ctor = (httpRequest.url.startsWith('http:')
-                    ? await import('http-proxy-agent')
-                    : await import('https-proxy-agent')).default;
+                const HttpProxyAgent = (await import('http-proxy-agent')).HttpProxyAgent;
+                const HttpsProxyAgent = (await import('https-proxy-agent')).HttpsProxyAgent;
 
-                options.agent = new ctor(proxyOptions);
+                options.agent = {
+                    http: new HttpProxyAgent(settings.proxy, proxyOptions),
+                    https: new HttpsProxyAgent(settings.proxy, proxyOptions)
+                };
             }
         }
 

@@ -5,6 +5,9 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import http from 'node:http';
+import https from 'node:https';
+import { createRequire } from 'node:module';
 
 const RUNNER = process.env.CLI_RUTA ?? 'dist-cli/cli/index.js';
 if (!fs.existsSync(RUNNER)) {
@@ -69,6 +72,46 @@ const correr = (args) => new Promise((res) => {
 
 let fallos = 0;
 const ok = (n, c, extra = '') => { console.log(`${c ? '  OK  ' : '  FALLA'} ${n}${extra ? ' · ' + extra : ''}`); if (!c) fallos++; };
+
+{
+  console.log('== proxy agent compatibility');
+  const require = createRequire(import.meta.url);
+  const originalRequest = https.request;
+  const { HttpProxyAgent } = require('http-proxy-agent');
+  const { HttpsProxyAgent } = require('https-proxy-agent');
+  const got = require('got');
+  const proxyUrl = 'http://user:password@127.0.0.1:8080';
+  const options = { agent: { http: new HttpProxyAgent(proxyUrl), https: new HttpsProxyAgent(proxyUrl) } };
+  ok('loading proxy agents does not patch https.request', https.request === originalRequest);
+  ok('got accepts both protocol agents', Object.keys(got.mergeOptions(options).agent).sort().join(',') === 'http,https');
+  try {
+    const request = https.request(new URL('https://127.0.0.1:1/'), {}, () => undefined);
+    request.on('error', () => undefined);
+    request.destroy();
+    ok('https.request accepts URL, options and callback', true);
+  } catch (error) {
+    ok('https.request accepts URL, options and callback', false, error.message);
+  }
+  let receivedUrl;
+  const proxy = http.createServer((request, response) => {
+    receivedUrl = request.url;
+    response.end('proxied');
+  });
+  await new Promise(resolve => proxy.listen(0, '127.0.0.1', resolve));
+  try {
+    const localProxyUrl = `http://127.0.0.1:${proxy.address().port}`;
+    const response = await got('http://example.invalid/test', {
+      agent: { http: new HttpProxyAgent(localProxyUrl), https: new HttpsProxyAgent(localProxyUrl) },
+      retry: 0,
+      timeout: 2000
+    });
+    ok('HTTP request reaches the local proxy', response.body === 'proxied' && receivedUrl === 'http://example.invalid/test');
+  } catch (error) {
+    ok('HTTP request reaches the local proxy', false, error.message);
+  } finally {
+    await new Promise((resolve, reject) => proxy.close(error => error ? reject(error) : resolve()));
+  }
+}
 
 console.log('== P-23 · el fichero completo, con dos peticiones encadenadas');
 const r1 = await correr([bueno]);
