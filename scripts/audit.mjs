@@ -347,14 +347,36 @@ ok('the release workflow attaches the standalone runner', read('.github/workflow
   const uncompiled = withAudit.filter((f) => {
     const before = read(`.github/workflows/${f}`).split(/^\s*(?:-\s+)?run:\s*npm run audit\s*$/m)[0];
     const step = (...scripts) => scripts.some((s) => new RegExp(`^[ \\t]*(?:-[ \\t]+)?run:\\s*(?:xvfb-run -a )?npm run ${s}\\s*$`, 'm').test(before));
-    return !(step('compile-tests', 'test:unit', 'test:integration') && step('build:cli', 'test:cli'));
+    // `build` too: since the Marketplace tool stopped running `vscode:prepublish`
+    // on `ls`, the audit finds dist/ only if someone built it.
+    return !(step('compile-tests', 'test:unit', 'test:integration') && step('build:cli', 'test:cli') && step('build', 'test:integration'));
   });
   // It is a textual check: it recognises a `run: npm run <script>` step on its
   // own line, and looks at what comes before the audit in the file, not in the
   // job. If a workflow stops launching the audit that way, it fails too.
   const detail = withAudit.length < 3 ? `only ${withAudit.length} workflows launch the audit in a way this guard recognises: ${withAudit.join(', ')}`
     : uncompiled.length ? `without compiling first: ${uncompiled.join(', ')}` : withAudit.join(', ');
-  ok('every workflow that launches the audit compiles the tests and the runner first', withAudit.length >= 3 && uncompiled.length === 0, detail);
+  ok('every workflow that launches the audit builds and compiles the tests and the runner first', withAudit.length >= 3 && uncompiled.length === 0, detail);
+}
+// The store tools are pinned by version wherever they are invoked. Through
+// npx, the bare name of the Marketplace tool resolves to the abandoned package
+// (2.15.0, deprecated), and the Open VSX one to whatever is newest that day.
+// Nothing in the lockfile pins them: npx fetches them at run time, so the pin
+// lives in the command.
+{
+  // Any mention of either tool outside a comment has to carry `@x.y.z`, in
+  // whatever form npx takes it (`npx --yes <tool>`, `npx @vscode/<tool>`,
+  // `run('npx', ['<tool>', ...])`). The names are assembled here so that this
+  // block does not trip itself.
+  const marketplaceTool = ['vs', 'ce'].join('');
+  const openVsxTool = ['ov', 'sx'].join('');
+  const bare = new RegExp(`(?<![\\w@/.-])(?:@vscode/)?(?:${marketplaceTool}|${openVsxTool})(?![\\w.-])(?!@\\d+\\.\\d+\\.\\d+)`);
+  const versioned = new RegExp(`@vscode/${marketplaceTool}@\\d+\\.\\d+\\.\\d+|(?<![\\w@/.-])${openVsxTool}@\\d+\\.\\d+\\.\\d+`);
+  const files = ['scripts/audit.mjs', 'scripts/test-vsix.mjs', ...fs.readdirSync('.github/workflows').filter((f) => /\.ya?ml$/.test(f)).map((f) => `.github/workflows/${f}`)];
+  const code = (f) => read(f).split('\n').filter((l) => !/^\s*(#|\/\/)/.test(l)).join('\n');
+  const loose = files.filter((f) => bare.test(code(f)));
+  const pinned = files.filter((f) => versioned.test(code(f)));
+  ok('the store tools are pinned by version wherever they run', loose.length === 0 && pinned.length >= 4, loose.length ? `unpinned in ${loose.join(', ')}` : pinned.join(', '));
 }
 const npmPkg = JSON.parse(read('npm/package.json'));
 ok('the npm package has the same version number', npmPkg.version === pkg.version, `npm ${npmPkg.version} / extension ${pkg.version}`);
@@ -366,7 +388,7 @@ const l10n = run('node scripts/check-l10n.mjs');
 ok('English and Spanish without gaps', l10n.exitCode === 0, /=+ (\d+) failures/.exec(l10n.output)?.[1] + ' failures');
 
 section('the package carries what it promises and nothing else');
-const packaged = run('npx vsce ls --no-dependencies').output.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+const packaged = run('npx --yes @vscode/vsce@4.0.0 ls --no-dependencies').output.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 const inPackage = (f) => packaged.includes(f);
 ok('the runner bundle ships in the package', inPackage('dist/cli.js'));
 ok('the declared binary is the one that ships', inPackage(pkg.bin.restclient.replace('./', '')));
