@@ -3,6 +3,28 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0](https://github.com/druppelt/vscode-restclient/compare/v1.3.0...v1.4.0) (2026-10-17)
+
+
+### Features
+
+* assertions are checked in the editor too ([#34](https://github.com/druppelt/vscode-restclient/issues/34)) ([#38](https://github.com/druppelt/vscode-restclient/issues/38)) ([a1b1c69](https://github.com/druppelt/vscode-restclient/commit/a1b1c69e80a037b0de8032a8f6a07fc9072681a5))
+* support the HTTP QUERY method ([5459652](https://github.com/druppelt/vscode-restclient/commit/5459652e8d0845e05bd38c96895d83dce123132f))
+* support the HTTP QUERY method ([7f66b32](https://github.com/druppelt/vscode-restclient/commit/7f66b32c5e51f5cba7d5ecb8f51d4c267a863bf1))
+* support wildcard host keys in rest-client.certificates ([#27](https://github.com/druppelt/vscode-restclient/issues/27)) ([e238139](https://github.com/druppelt/vscode-restclient/commit/e238139d1d0750e4e296da995a82e833191aeade))
+
+
+### Bug Fixes
+
+* **audit:** exceptions that expire by themselves ([#25](https://github.com/druppelt/vscode-restclient/issues/25)) ([c0eec4d](https://github.com/druppelt/vscode-restclient/commit/c0eec4d97b02891930a919c30e8ed9339c2a855f))
+* **ci:** the release-please publish job compiles what the audit needs ([#31](https://github.com/druppelt/vscode-restclient/issues/31)) ([c229deb](https://github.com/druppelt/vscode-restclient/commit/c229debeb33c45da5dc11f64682788b967ddfd2f))
+* **deps:** axios 1.20.0 ([#23](https://github.com/druppelt/vscode-restclient/issues/23)) ([8c3efc3](https://github.com/druppelt/vscode-restclient/commit/8c3efc38771b2ff2ac0e94632c74765e12f98b37))
+* **deps:** http-cache-semantics 4.3.0, exceptions retired ([#28](https://github.com/druppelt/vscode-restclient/issues/28)) ([3b7b73b](https://github.com/druppelt/vscode-restclient/commit/3b7b73b1eab43dff0bf99a7b8486cd5219b600d7))
+* **deps:** source-map-js 1.2.2 ([#35](https://github.com/druppelt/vscode-restclient/issues/35)) ([3f62467](https://github.com/druppelt/vscode-restclient/commit/3f62467c5bb6d5f64f4f3aaa09bcfebb7998e330))
+* requests through a proxy ([#32](https://github.com/druppelt/vscode-restclient/issues/32)) ([#33](https://github.com/druppelt/vscode-restclient/issues/33)) ([72e08be](https://github.com/druppelt/vscode-restclient/commit/72e08be52c888768ca2c137be3bec3b7564cb662))
+* the MCP server returns the body and 1-based lines; the action and the docs point here; English demo ([#40](https://github.com/druppelt/vscode-restclient/issues/40)) ([752b4c3](https://github.com/druppelt/vscode-restclient/commit/752b4c3abf02322e84ae47d10c9b37e6313ed451))
+* two CodeQL alerts, one dismissed ([#29](https://github.com/druppelt/vscode-restclient/issues/29)) ([84688ab](https://github.com/druppelt/vscode-restclient/commit/84688abfbf583ced4f2e8baabd2c1e74a7e5b671))
+
 ## [1.3.0](https://github.com/vscode-restclient/vscode-restclient/compare/v1.2.1...v1.3.0) (2026-10-17)
 
 
